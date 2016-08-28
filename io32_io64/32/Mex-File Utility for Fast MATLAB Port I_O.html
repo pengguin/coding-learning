@@ -1,0 +1,316 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Mex-File Utility for Fast MATLAB Port I/O</title>
+<meta name="GENERATOR" content="Microsoft FrontPage 12.0">
+</head>
+
+<body>
+
+<h1 align="center"><font size="5">Mex-File Plug-in for Fast MATLAB Port I/O 
+Access<br>
+(32-bit Windows 2000, XP, Vista, 7)</font></h1>
+
+<hr>
+
+<p><font color="#FF0000"><u>Note</u>: The software described below currently 
+supports 32-bit versions of Windows (2000,/XP/Vista/7).&nbsp; <br>
+A version of this software for 64-bit Windows can be found
+<a href="http://apps.usd.edu/coglab/psyc770/IO64.html">here</a>.<br>
+A version for running 32-bit MATLAB on 
+64-bit Windows can be found
+<a href="http://apps.usd.edu/coglab/psyc770/IO32on64.html">here</a>.</font></p>
+<p><font color="#FF0000"><u>Windows Vista and 7 users</u> should note the 
+<b>Vista Installation Notes</b> near the end of this document.</font></p>
+<p>In order to accomplish very fast digital port I/O using a NO COST add-on to MATLAB, 
+we have developed a C++ extension (mex-file) that uses native 
+methods to access low-level hardware.&nbsp; This mex-file is named <b>
+<font size="4">io32.dll</font></b>.&nbsp; It uses a freeware self-installing 
+system driver named <b><font size="4">inpout32.dll</font></b>. [<u>Note</u>: 
+Self-installation of the driver requires that the MATLAB is run with Administrator privileges.&nbsp; The driver must have been 
+previously installed in order to support non-Administrator users].</p>
+
+<p><u>To install this expanded capability</u>: download the <b><font size="4">
+<a href="misc/io32.dll">io32.dll</a></font></b> module and move it to a 
+directory in your MATLAB path
+(e.g., c:\cog2000\Cogent2000v1.28\Toolbox 
+in the case of the USD PSYC 770 standard Cogent 2000 installation specification).&nbsp; 
+MATLAB 7.5+ should rename io32.dll to <b>io32.mexw32</b> to prevent 
+the warning message every time the <b>io32</b> module is loaded.&nbsp; 
+Next, download the <b><a href="misc/inpout32.dll"><font size="4">inpout32.dll</font></a></b> 
+module and move it to the C:\windows\system32 directory (or any other directory 
+that is on the computer's system PATH).</p>
+<p>&nbsp;</p>
+<p align="left"><b><font size="6">io32() Command Usage Summary:</font></b></p>
+<table border="2" width="96%" cellspacing="6" cellpadding="6" id="table1">
+	<tr>
+		<td width="195" align="center">object =<b> io32</b>;</td>
+		<td>Calling <b>io32</b> with no input arguments from the MATLAB command 
+		window creates an instance of the
+		<b>io32</b> interface object and returns a pointer to its 
+		location.&nbsp; This command must be issued first since the <u>object</u> 
+		pointer is a required input argument for all other calls to <b>io32</b>.&nbsp; 
+		This <b>io32</b> call will not work properly unless a return variable 
+		is specified (i.e., 'object' in the example to the left).</td>
+	</tr>
+	<tr>
+		<td width="195" align="center">status =<b> io32( </b>object<b> )</b>;</td>
+		<td>Calling <b>io32()</b> using one input argument and a single return 
+		variable causes a<i> </i>kernel-level I/O driver named <i>
+		hwinterface.sys</i> to be 
+		automatically installed (i.e., no manual driver installation is 
+		required).&nbsp; <u>object</u> is the pointer to a previously created 
+		instance of <i>io32</i> (see the step performed above); and, <u>status</u> is a 
+		variable returned from the function that describes whether the driver 
+		installation process was successful (0 = successful).&nbsp; Subsequent 
+		attempts to perform port I/O using <i>io32()</i> will fail if a non-zero status 
+		value is returned here.&nbsp; This step must be performed prior to any 
+		subsequent attempts to read or write I/O port data.&nbsp; 
+		Auto-installation of the driver requires ADMINISTRATOR privileges.&nbsp; 
+		Once the kernel-level driver is successfully installed (i.e., the first 
+		time the <b>io32</b> command is run), subsequent users will not require 
+		admin privileges.</td>
+	</tr>
+	<tr>
+		<td width="195" align="center"><b>io32(</b> object, address, data <b>)</b>;</td>
+		<td>Calling <b>io32()</b> with three input parameters allows the user to 
+		output data to the specified I/O port address.&nbsp; <u>object</u> is 
+		the pointer to a previously created <b>io32</b> object (described above); <u>address</u> 
+		specifies the physical address of the destination I/O port (&lt;64K); and,
+		<u>data</u> represents the value (between 0-255) being output to the I/O 
+		port.</td>
+	</tr>
+	<tr>
+		<td width="195" align="center">data =<b> io32( </b>object, address <b>)</b>;</td>
+		<td>Calling <b>io32() </b>using two input arguments and one return 
+		variable allows the user to read the contents of the specified I/O port.&nbsp;
+		<u>object</u> is the pointer to a previously created instance of <b>io32</b> 
+		(see above), <u>address</u> specifies the location of the I/O port being 
+		read; and, <u>data</u> contains the integer-format value returned after 
+		reading the I/O port.</td>
+	</tr>
+</table>
+<p>
+<br>
+<u>The following MATLAB command snippet demonstrates how to use the<b>
+<font size="4">io32()</font></b> extension</u>:</p>
+<p>%create an instance of the <i>io32</i> object<br>
+<b>ioObj = io32;</b><br>
+%<br>
+%initialize the <i>hwinterface.sys</i> kernel-level I/O driver<br>
+<b>status = io32(ioObj);</b><br>
+%<br>
+%if status = 0, you are now ready to write and read to a hardware port<br>
+%let's try sending the value=1 to the parallel printer's output port (LPT1)<br>
+<b>address = hex2dec('378');&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </b>
+%standard LPT1 output port address<b> </b>
+(0x378)<b><br>
+data_out=1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </b>
+%sample data value<b><br>
+io32(ioObj,address,data_out);&nbsp;&nbsp; </b>%output command<br>
+%<br>
+%now, let's read that value back into MATLAB<br>
+<b>data_in=io32(ioObj,address);</b><br>
+%when finished with the <i>io32</i> object it can be discarded via<br>
+%'clear all', 'clear mex', 'clear io32' or 'clear functions' command.</p><hr>
+<p><u><font size="6"><b>MATLAB</b></font><b><font size="6"> Scripts to Simplify 
+Port I/O</font></b></u></p>
+<p>The code examples above reveal that using the <b><font size="4">io32()</font></b> 
+extensions is a bit complex.&nbsp; In an attempt to reduce this complexity, a 
+set of MATLAB scripts has been developed to simplify I/O programming. </p>
+<p>In order to have access to these scripts: download the
+<a href="misc/io32.dll"><font size="4">io32.dll</font></a>,
+<a href="m-files/config_io.m"><font size="4">config_io.m</font></a>,
+<a href="m-files/inp.m"><font size="4">inp.m</font></a> and
+<a href="m-files/outp.m"><font size="4">outp.m</font></a> files and move them to 
+a directory in your MATLAB path. In addition, download the <b>
+<a href="misc/inpout32.dll"><font size="4">inpout32.dll</font></a></b> module 
+and move it to the C:\windows\system32 directory (or, C:\WINNT\system32 for 
+Windows 2000 users) as previously described above.</p>
+<p><b><font size="6">MATLAB</font><font size="6"> I/O Script Usage:</font></b></p>
+<table border="1" width="94%" cellspacing="3" cellpadding="3" id="table2">
+	<tr>
+		<td align="center" width="208"><b><font size="4">config_io;</font></b></td>
+		<td>Installs the kernel-level driver required to access low-level 
+		hardware.&nbsp; This command must be given prior to any attempts to use 
+		the custom <b>inp()</b> or <b>outp()</b> scripts.</td>
+	</tr>
+	<tr>
+		<td align="center" width="208"><b><font size="4">outp( address, byte );</font></b></td>
+		<td>This function writes the 8-bit value passed in the variable named <u>
+		byte</u> to the I/O port specified by <u>address</u>.</td>
+	</tr>
+	<tr>
+		<td align="center" width="208"><b><font size="4">byte = inp( address );</font></b></td>
+		<td>This function read the I/O port location specified by <u>address</u> 
+		and returns the result of that operation.</td>
+	</tr>
+</table>
+<p>A simple benchmark (<a href="m-files/iotimer_inp.m">iotimer_inp.m</a>) 
+reveals that I/O using these scripts is somewhat slower than calling the <b>
+<font size="4">io32()</font></b> object directly (as demonstrated above).&nbsp; Instead of being able to 
+read a port with a latency of approximately 10 microseconds, using the <b><font size="4">
+inp()</font></b> script yields a latency of approximately 40 microseconds. This 
+is fast enough for many experimental psychology applications (such as 
+scanning a button box, etc.).&nbsp; Use direct calls to <b>io32()</b>, as 
+described above, if your application requires the shortest possible I/O 
+latencies.</p>
+<p><u>The following MATLAB code snippet demonstrates how to use the m-file I/O 
+scripts</u>:</p>
+<p>% install and/or initialize the <i>kernel-level</i> I/O driver<br>
+<b>config_io;</b><br>
+%<u> optional step</u>: verify that the driver was successfully installed/initialized<br>
+<b>global cogent;<br>
+if( cogent.io.status ~= 0 )<br>
+&nbsp;&nbsp; error('inp/outp installation failed');<br>
+end</b><br>
+%write a value to the default LPT1 printer output port (at 0x378)<br>
+<b>address = hex2dec('378');<br>
+byte = 99;<br>
+outp(address,byte);</b><br>
+%read back the value written to the printer port above<br>
+<b>datum=inp(address);</b></p>
+<p>&nbsp;</p>
+<p><b><font size="6">Reaction Time Benchmark/Results</font></b></p>
+<p>Since our lab uses low-level digital I/O  to control stimuli and/or 
+collect human response times with millisecond accuracy requirements, we 
+developed a <b>io32() </b>timing benchmark that mimics a classic &quot;reaction time&quot; protocol.&nbsp; 
+This approach involved building a hardware-based <i><b>Reaction Time Simulator</b>
+</i>that produces an output &quot;response&quot; precisely 200 msec after receiving a 
+&quot;stimulus&quot; input from the system under test (see <b>
+<a href="pdf/RTSimulator.pdf">RT Simulator</a></b> for 
+additional details and a hardware schematic diagram).&nbsp; </p>
+<p>The temporal latency of the MATLAB <b>io32()</b> module was assessed by triggering 
+the black box <b>RT Simulator</b> via the PC's Line Printer (LPT) Data 
+Register bit-0 (connector pin 2) and monitoring the arrival time of the 
+&quot;response&quot; from the <b>RT Simulator</b> via LPT Status Register bit-4 (connector 
+pin 13).&nbsp; See <b><a href="printerport.html">Printer Port</a></b> for 
+additional details about the PC's legacy printer port I/O interface.</p>
+<p>The elapsed time recorded between the stimulus output and the response input 
+given an &quot;ideal system&quot; would always be exactly 200 msec.&nbsp; In order to 
+characterize the latency behavior our real systems we collected &quot;reaction times&quot; 
+for 200 consecutive trials (each separated by an intertrial interval of 200 msec).&nbsp; 
+The statistical results summarizing these tests performed on two different 
+computers running <i>MATLAB 2008b</i> on Windows XP and Windows Vista are 
+reported in <b>Table 1 </b>(below).&nbsp; The standard deviations of the latency 
+distributions were extremely small (worse case was 31 MICROSECONDS) and the 
+range separating the shortest latency from the longest latency was a mere 0.147 
+msec (147 microseconds).&nbsp; These results clearly indicate that low-level 
+digital I/O implemented via MATLAB <b>io32() </b>on Windows-based computers is 
+capable of the temporal precision needed to support the most demanding 
+behavioral research protocols.</p>
+<table border="2" cellpadding="0" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111" width="90%">
+  <tr>
+    <td width="31%" align="center">&nbsp;</td>
+    <td width="14%" align="center"><b>Mean</b></td>
+    <td width="15%" align="center"><b>Standard Deviation</b></td>
+    <td width="14%" align="center"><b>Minimum</b></td>
+    <td width="13%" align="center"><b>Maximum</b></td>
+    <td width="13%" align="center"><b>Range</b></td>
+  </tr>
+  <tr>
+    <td width="31%" align="center"><b>Windows XP Pro (SP3)<br>
+    Dell Inspiron 600m; 1 GB RAM<br>
+    Intel Pentium M @ 1.7 GHz<br>
+&nbsp;</b></td>
+    <td width="14%" align="center">200.159</td>
+    <td width="15%" align="center">0.021</td>
+    <td width="14%" align="center">200.108</td>
+    <td width="13%" align="center">200.235</td>
+    <td width="13%" align="center">0.127</td>
+  </tr>
+  <tr>
+    <td width="31%" align="center"><b>Windows Vista Business (SP2)<br>
+    HP dc7900; 4 GB RAM<br>
+    Intel Core Q9550 @ 2.83 GHz</b></td>
+    <td width="14%" align="center">200.066</td>
+    <td width="15%" align="center">0.031</td>
+    <td width="14%" align="center">200.010</td>
+    <td width="13%" align="center">200.152</td>
+    <td width="13%" align="center">0.147</td>
+  </tr>
+</table>
+<p align="center"><b>Table 1.</b><br>
+Results of <b>io32() </b>benchmark latency tests using external 200 msec Reaction Time 
+Simulator<br>
+(Statistics based on 200 consecutive trials.&nbsp; All times reported in 
+milliseconds)</p>
+<p><b><font size="6">Windows Vista and 7 Installation Notes</font></b></p>
+<p>Although our lab does not yet have much experience with Windows Vista/7, we 
+were able to successfully install the software described above using the 
+procedure described below (using MATLAB 7.5.0-R2007b and MATLAB 7.7-R2008b):</p>
+<table border="0" width="80%">
+	<tr>
+		<td width="30">1.</td>
+		<td>Log in as a user with Administrator privileges.</td>
+	</tr>
+	<tr>
+		<td width="30">2.</td>
+		<td>Disable UAC (User Account Control).&nbsp; An easy way to do this in Windows 
+Vista is to: 
+Start-Run-MSCONFIG. Select the Tools tab, scroll down to the option for &quot;Disable UAC&quot; and select it. 
+Next, press the &quot;Launch&quot; button. You must 
+then RESTART the system for this change to take effect.</td>
+	</tr>
+	<tr>
+		<td width="30">3.</td>
+		<td>Download and copy the <a href="misc/inpout32.dll">inpout32.dll</a> file to the C:\WINDOWS\SYSTEM32 directory.</td>
+	</tr>
+	<tr>
+		<td width="30">4.</td>
+		<td>Download the <a href="misc/io32.dll">io32.dll</a>,
+<a href="m-files/config_io.m">config_io.m</a>, <a href="m-files/inp.m">inp.m</a> and 
+<a href="m-files/outp.m">outp,m</a> files to a working 
+directory of your choice. This directory will be added to your MATLAB path 
+in step-6 below.</td>
+	</tr>
+	<tr>
+		<td width="30">5.</td>
+		<td>Start MATLAB in &quot;Run as Administrator&quot; mode (Right-click icon and select &quot;Run 
+as Administrator&quot;).</td>
+	</tr>
+	<tr>
+		<td width="30">6.</td>
+		<td>Add the directory containing the downloaded m-files to your MATLAB path via 
+the File|Set Path|Add with Subfiles... menu command.</td>
+	</tr>
+	<tr>
+		<td width="30">7.</td>
+		<td>Run &quot;config_io&quot; from the MATLAB command window.&nbsp; If there's no error 
+message at this point, you've successfully installed the software.</td>
+	</tr>
+	<tr>
+		<td width="30">8.</td>
+		<td> <u>Optional</u>: If you need to re-enable UAC (User Account Control), follow the 
+instructions in step-2 but select &quot;Enable UAC&quot; instead of &quot;Disable UAC&quot;.</td>
+	</tr>
+</table>
+<p><b><font size="6">Parsing Individual Bits within an I/O Byte</font></b></p>
+<p>When one reads an I/O port one is usually interested in the status of a 
+single bit among the 8-bits returned by a call to <b>inp(address)</b>. MATLAB 
+provides a number of functions to deal with data on a 'bitwise' basis.&nbsp; For 
+example, the following lines of code show how to test the status of a single 
+input line using the <b>bitget()</b> function:</p>
+<p>% Read current value of an input port at the specified address<br>
+% Note that the 
+value returned by inp(address) is coerced into an 8-bit format using <b>uint8</b><br>
+<b>response = uint8( inp(address) );</b><br>
+% Take some action if the least-significant-bit is currently at logical-0 level<br>
+<b>if (bitget( response,1) == 0)<br>
+&nbsp;&nbsp; display('Input is active')<br>
+end</b></p>
+<p><u>See also</u>: bitset(), bitand(), bitor(), bitxor() for additional bitwise 
+operators</p>
+<hr>
+<p>Additional information about the INPOUT32 (<i>hwinterface.sys</i>) driver for 
+Windows 
+can be found <a href="http://www.logix4u.net/inpout_theory.htm">here</a>.</p>
+<p><b><font size="5">Last revised: 23 June 2013</font></b></p>
+
+<hr>
+
+<p align="center"><a href="http://apps.usd.edu/coglab/schieber">Professor Schieber's Home Page</a> - <a
+href="javascript:history.back()">Previous Page</a> </p>
+</body>
+</html>
